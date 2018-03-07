@@ -3,6 +3,10 @@ package com.rusel.RCTBluetoothSerial;
 import java.lang.reflect.Method;
 import java.util.Set;
 import javax.annotation.Nullable;
+import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.BitSet;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -14,6 +18,12 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.util.Log;
 import android.util.Base64;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.Bitmap;
+import android.widget.Toast;
+
 
 import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.LifecycleEventListener;
@@ -366,6 +376,120 @@ public class RCTBluetoothSerialModule extends ReactContextBaseJavaModule impleme
         promise.resolve(true);
     }
 
+    //Thang add : start//
+
+    protected void printDemo() {
+        printPhoto(R.drawable.arrow_up);
+        // printText("     >>>>   Thank you  <<<<     "); // total 32 char in a single line
+        printNewLine();
+        printNewLine();
+    }
+    //print photo
+    public void printPhoto(int img) {
+        try {
+            Bitmap bmp = BitmapFactory.decodeResource(mReactContext.getResources(),
+                    img);
+            if(bmp!=null){
+                byte[] command = Utils.decodeBitmap(bmp);
+                mBluetoothService.write(PrinterCommands.ESC_ALIGN_CENTER);
+                mBluetoothService.write(command);
+            }else{
+                Log.e("Print Photo error", "the file isn't exists");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.e("PrintTools", "the file isn't exists");
+        }
+    }
+    public void printPhoto(String url) {
+        try {
+            Bitmap bmp = BitmapFactory.decodeFile(url);
+            if(bmp!=null){
+                byte[] command = Utils.decodeBitmap(bmp);
+                mBluetoothService.write(PrinterCommands.ESC_ALIGN_CENTER);
+                mBluetoothService.write(command);
+            }else{
+                Log.e("Print Photo error", "the file isn't exists");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.e("PrintTools", "the file isn't exists");
+        }
+    }
+    //print unicode
+    public void printUnicode(){
+            mBluetoothService.write(PrinterCommands.ESC_ALIGN_CENTER);
+            mBluetoothService.write(Utils.UNICODE_TEXT);
+    }
+
+    public void printNewLine() {
+        mBluetoothService.write(PrinterCommands.FEED_LINE);
+    }
+
+    @ReactMethod
+    /**
+     * Write to device over serial port
+     */
+    public void writeImageToDevice(String url, Promise promise) {
+        printPhoto(url);
+        printNewLine();
+        printNewLine();
+        promise.resolve(true);
+    }
+    private int mWidth;
+    private int mHeight;
+    private String mStatus;
+    private BitSet dots;
+    public String convertBitmap(Bitmap inputBitmap) {
+        
+        mWidth = inputBitmap.getWidth();
+        mHeight = inputBitmap.getHeight();
+    
+        convertArgbToGrayscale(inputBitmap, mWidth, mHeight);
+        mStatus = "ok";
+        return mStatus;
+    
+    }
+    
+    private void convertArgbToGrayscale(Bitmap bmpOriginal, int width,
+            int height) {
+        int pixel;
+        int k = 0;
+        int B = 0, G = 0, R = 0;
+        dots = new BitSet();
+        try {
+    
+            for (int x = 0; x < height; x++) {
+                for (int y = 0; y < width; y++) {
+                    // get one pixel color
+                    pixel = bmpOriginal.getPixel(y, x);
+    
+                    // retrieve color of all channels
+                    R = Color.red(pixel);
+                    G = Color.green(pixel);
+                    B = Color.blue(pixel);
+                    // take conversion up to one single value by calculating
+                    // pixel intensity.
+                    R = G = B = (int) (0.299 * R + 0.587 * G + 0.114 * B);
+                    // set bit into bitset, by calculating the pixel's luma
+                    if (R < 55) {                       
+                        dots.set(k);//this is the bitset that i'm printing
+                    }
+                    k++;
+    
+                }
+    
+    
+            }
+    
+    
+        } catch (Exception e) {
+            // TODO: handle exception
+            Log.e(TAG, e.toString());
+        }
+    }
+    //Thang add :end//
+
     /**********************/
     /** Read from device **/
 
@@ -704,3 +828,58 @@ public class RCTBluetoothSerialModule extends ReactContextBaseJavaModule impleme
         mReactContext.registerReceiver(bluetoothStateReceiver, intentFilter);
     }
 }
+
+class PrinterCommands {
+    public static final byte HT = 0x9;
+    public static final byte LF = 0x0A;
+    public static final byte CR = 0x0D;
+    public static final byte ESC = 0x1B;
+    public static final byte DLE = 0x10;
+    public static final byte GS = 0x1D;
+    public static final byte FS = 0x1C;
+    public static final byte STX = 0x02;
+    public static final byte US = 0x1F;
+    public static final byte CAN = 0x18;
+    public static final byte CLR = 0x0C;
+    public static final byte EOT = 0x04;
+
+    public static final byte[] INIT = {27, 64};
+    public static byte[] FEED_LINE = {10};
+
+    public static byte[] SELECT_FONT_A = {20, 33, 0};
+
+    public static byte[] SET_BAR_CODE_HEIGHT = {29, 104, 100};
+    public static byte[] PRINT_BAR_CODE_1 = {29, 107, 2};
+    public static byte[] SEND_NULL_BYTE = {0x00};
+
+    public static byte[] SELECT_PRINT_SHEET = {0x1B, 0x63, 0x30, 0x02};
+    public static byte[] FEED_PAPER_AND_CUT = {0x1D, 0x56, 66, 0x00};
+
+    public static byte[] SELECT_CYRILLIC_CHARACTER_CODE_TABLE = {0x1B, 0x74, 0x11};
+
+    public static byte[] SELECT_BIT_IMAGE_MODE = {0x1B, 0x2A, 33, -128, 0};
+    public static byte[] SET_LINE_SPACING_24 = {0x1B, 0x33, 24};
+    public static byte[] SET_LINE_SPACING_30 = {0x1B, 0x33, 30};
+
+    public static byte[] TRANSMIT_DLE_PRINTER_STATUS = {0x10, 0x04, 0x01};
+    public static byte[] TRANSMIT_DLE_OFFLINE_PRINTER_STATUS = {0x10, 0x04, 0x02};
+    public static byte[] TRANSMIT_DLE_ERROR_STATUS = {0x10, 0x04, 0x03};
+    public static byte[] TRANSMIT_DLE_ROLL_PAPER_SENSOR_STATUS = {0x10, 0x04, 0x04};
+
+    public static final byte[] ESC_FONT_COLOR_DEFAULT = new byte[] { 0x1B, 'r',0x00 };
+    public static final byte[] FS_FONT_ALIGN = new byte[] { 0x1C, 0x21, 1, 0x1B,
+            0x21, 1 };
+    public static final byte[] ESC_ALIGN_LEFT = new byte[] { 0x1b, 'a', 0x00 };
+    public static final byte[] ESC_ALIGN_RIGHT = new byte[] { 0x1b, 'a', 0x02 };
+    public static final byte[] ESC_ALIGN_CENTER = new byte[] { 0x1b, 'a', 0x01 };
+    public static final byte[] ESC_CANCEL_BOLD = new byte[] { 0x1B, 0x45, 0 };
+
+
+    /*********************************************/
+    public static final byte[] ESC_HORIZONTAL_CENTERS = new byte[] { 0x1B, 0x44, 20, 28, 00};
+    public static final byte[] ESC_CANCLE_HORIZONTAL_CENTERS = new byte[] { 0x1B, 0x44, 00 };
+    /*********************************************/
+
+    public static final byte[] ESC_ENTER = new byte[] { 0x1B, 0x4A, 0x40 };
+    public static final byte[] PRINTE_TEST = new byte[] { 0x1D, 0x28, 0x41 };
+    }
