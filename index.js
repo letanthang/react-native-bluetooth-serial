@@ -34,4 +34,18 @@ BluetoothSerial.write = (data) => {
   return BluetoothSerial.writeToDevice(data.toString('base64'))
 }
 
+BluetoothSerial.writeImage = (url) => {
+  if (typeof data === 'string') {
+    data = new Buffer(data)
+  }
+  return BluetoothSerial.writeImageToDevice(url)
+}
+
+BluetoothSerial.writeImageBase64 = (base64) => {
+  if (typeof data === 'string') {
+    data = new Buffer(data)
+  }
+  return BluetoothSerial.printPhotoBase64(base64)
+}
+
 module.exports = BluetoothSerial

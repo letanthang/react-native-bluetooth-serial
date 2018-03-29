@@ -101,7 +101,7 @@ public class RCTBluetoothSerialModule extends ReactContextBaseJavaModule impleme
         return "RCTBluetoothSerial";
     }
 
-    @Override
+
     public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent intent) {
         if (D) Log.d(TAG, "On activity result request: " + requestCode + ", result: " + resultCode);
         if (requestCode == REQUEST_ENABLE_BLUETOOTH) {
@@ -129,6 +129,33 @@ public class RCTBluetoothSerialModule extends ReactContextBaseJavaModule impleme
     }
 
     @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        if (D) Log.d(TAG, "On activity result request: " + requestCode + ", result: " + resultCode);
+        if (requestCode == REQUEST_ENABLE_BLUETOOTH) {
+            if (resultCode == Activity.RESULT_OK) {
+                if (D) Log.d(TAG, "User enabled Bluetooth");
+                if (mEnabledPromise != null) {
+                    mEnabledPromise.resolve(true);
+                }
+            } else {
+                if (D) Log.d(TAG, "User did *NOT* enable Bluetooth");
+                if (mEnabledPromise != null) {
+                    mEnabledPromise.reject(new Exception("User did not enable Bluetooth"));
+                }
+            }
+            mEnabledPromise = null;
+        }
+
+        if (requestCode == REQUEST_PAIR_DEVICE) {
+            if (resultCode == Activity.RESULT_OK) {
+                if (D) Log.d(TAG, "Pairing ok");
+            } else {
+                if (D) Log.d(TAG, "Pairing failed");
+            }
+        }
+    }
+
+
     public void onNewIntent(Intent intent) {
         if (D) Log.d(TAG, "On new intent");
     }
@@ -404,6 +431,22 @@ public class RCTBluetoothSerialModule extends ReactContextBaseJavaModule impleme
     public void printPhoto(String url) {
         try {
             Bitmap bmp = BitmapFactory.decodeFile(url);
+            if(bmp!=null){
+                byte[] command = Utils.decodeBitmap(bmp);
+                mBluetoothService.write(PrinterCommands.ESC_ALIGN_CENTER);
+                mBluetoothService.write(command);
+            }else{
+                Log.e("Print Photo error", "the file isn't exists");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.e("PrintTools", "the file isn't exists");
+        }
+    }
+    public void printPhotoBase64(String base64) {
+        try {
+            byte[] decodedString = Base64.decode(base64, Base64.DEFAULT);
+            Bitmap bmp = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
             if(bmp!=null){
                 byte[] command = Utils.decodeBitmap(bmp);
                 mBluetoothService.write(PrinterCommands.ESC_ALIGN_CENTER);
