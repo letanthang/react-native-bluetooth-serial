@@ -127,8 +127,7 @@ public class RCTBluetoothSerialModule extends ReactContextBaseJavaModule impleme
             }
         }
     }
-
-    @Override
+    
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         if (D) Log.d(TAG, "On activity result request: " + requestCode + ", result: " + resultCode);
         if (requestCode == REQUEST_ENABLE_BLUETOOTH) {
