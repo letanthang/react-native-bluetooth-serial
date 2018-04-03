@@ -474,8 +474,8 @@ public class RCTBluetoothSerialModule extends ReactContextBaseJavaModule impleme
      */
     public void writeImageToDevice(String url, Promise promise) {
         printPhoto(url);
-        printNewLine();
-        printNewLine();
+        //printNewLine();
+        //printNewLine();
         promise.resolve(true);
     }
     private int mWidth;
