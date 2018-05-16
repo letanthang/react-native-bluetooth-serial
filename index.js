@@ -34,18 +34,20 @@ BluetoothSerial.write = (data) => {
   return BluetoothSerial.writeToDevice(data.toString('base64'))
 }
 
+BluetoothSerial.printHexCmd = (hexCmd) => {
+  return BluetoothSerial.printHex(hexCmd)
+}
+
 BluetoothSerial.writeImage = (url) => {
-  if (typeof data === 'string') {
-    data = new Buffer(data)
-  }
   return BluetoothSerial.writeImageToDevice(url)
 }
 
 BluetoothSerial.writeImageBase64 = (base64) => {
-  if (typeof data === 'string') {
-    data = new Buffer(data)
-  }
   return BluetoothSerial.printPhotoBase64(base64)
+}
+
+BluetoothSerial.feed = () => {
+  return BluetoothSerial.feedPaper()
 }
 
 module.exports = BluetoothSerial

@@ -403,6 +403,21 @@ public class RCTBluetoothSerialModule extends ReactContextBaseJavaModule impleme
     }
 
     //Thang add : start//
+    @ReactMethod
+    /**
+     * feed paper
+     */
+    public void feedPaper(Promise promise) {
+//        String hexCmd1 = "1F 1B 1F 80 04 05 06 44";
+//        mBluetoothService.write(Utils.hexStringToBytes2(hexCmd1));
+        String hexCmd = "1D 0C";
+        printHex(hexCmd, promise);
+    }
+
+    public void printHex(String hexCmd, Promise promise) {
+        mBluetoothService.write(Utils.hexStringToBytes2(hexCmd));
+        promise.resolve(true);
+    }
 
     protected void printDemo() {
         printPhoto(R.drawable.arrow_up);
@@ -427,17 +442,20 @@ public class RCTBluetoothSerialModule extends ReactContextBaseJavaModule impleme
             Log.e("PrintTools", "the file isn't exists");
         }
     }
-    public void printPhoto(String url) {
+    public void printPhoto(String url, Promise promise) {
         try {
             Bitmap bmp = BitmapFactory.decodeFile(url);
             if(bmp!=null){
                 byte[] command = Utils.decodeBitmap(bmp);
                 mBluetoothService.write(PrinterCommands.ESC_ALIGN_CENTER);
                 mBluetoothService.write(command);
+                promise.resolve(true);
             }else{
+                promise.reject(new Exception("the file isn't exists"));
                 Log.e("Print Photo error", "the file isn't exists");
             }
         } catch (Exception e) {
+            promise.reject(e);
             e.printStackTrace();
             Log.e("PrintTools", "the file isn't exists");
         }
@@ -473,10 +491,10 @@ public class RCTBluetoothSerialModule extends ReactContextBaseJavaModule impleme
      * Write to device over serial port
      */
     public void writeImageToDevice(String url, Promise promise) {
-        printPhoto(url);
+        printPhoto(url, promise);
         //printNewLine();
         //printNewLine();
-        promise.resolve(true);
+        
     }
     private int mWidth;
     private int mHeight;

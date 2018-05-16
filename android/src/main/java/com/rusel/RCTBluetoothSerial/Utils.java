@@ -149,6 +149,17 @@ public class Utils {
         return d;
     }
 
+    public static byte[] hexStringToBytes2(String hexString) {
+        hexString = hexString.toLowerCase();
+        String[] hexStrings = hexString.split(" ");
+        byte[] bytes = new byte[hexStrings.length];
+        for (int i = 0; i < hexStrings.length; i++) {
+            char[] hexChars = hexStrings[i].toCharArray();
+            bytes[i] = (byte) (charToByte(hexChars[0]) << 4 | charToByte(hexChars[1]));
+        }
+        return bytes;
+    }
+
     public static byte[] sysCopy(List<byte[]> srcArrays) {
         int len = 0;
         for (byte[] srcArray : srcArrays) {
